@@ -1,0 +1,1 @@
+export const url_config : string = `https://randomuser.me/api/?results=10`;
