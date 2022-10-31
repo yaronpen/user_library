@@ -1,23 +1,21 @@
 import React, { useEffect, useState } from 'react';
+import { Button, Modal } from 'react-bootstrap';
 import { confirmAlert } from 'react-confirm-alert';
 import { v4 as uuidv4 } from 'uuid';
-import { OverLay } from './styles';
-import 'react-confirm-alert/src/react-confirm-alert.css'; 
 
-const EditForm = ({ props, updateDetails, closeForm, deleteUser, emails }: any) => {
+const EditForm = ({ props, updateDetails, closeForm, deleteUser, emails, show, hideFunc }: any) => {
+  const [title, setTitle] = useState<string>('');
+  const [first, setFirstName] = useState<string>('');
+  const [last, setLastName] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [country, setCountry] = useState<string>('');
+  const [city, setCity] = useState<string>('');
+  const [street_name, setStreetName] = useState<string>('');
+  const [street_number, setStreetNumber] = useState<string>('');
+  const [error_message, setErrorMessage] = useState<string>('');
 
-  const [title, setTitle] = useState<any>('');
-  const [first, setFirstName] = useState<any>('');
-  const [last, setLastName] = useState<any>('');
-  const [email, setEmail] = useState<any>('');
-  const [country, setCountry] = useState<any>('');
-  const [city, setCity] = useState<any>('');
-  const [street_name, setStreetName] = useState<any>('');
-  const [street_number, setStreetNumber] = useState<any>('');
-  const [error_message, setErrorMessage] = useState<any>('');
+  const isNew: boolean = Object.keys(props).length > 0 ? false : true;
 
-  const isNew: boolean = props.length > 0 ? false: true;
-  
   useEffect(() => {
     setTitle(props?.name?.title);
     setFirstName(props?.name?.first);
@@ -27,20 +25,21 @@ const EditForm = ({ props, updateDetails, closeForm, deleteUser, emails }: any) 
     setCity(props?.location?.city);
     setStreetName(props?.location?.street.name);
     setStreetNumber(props?.location?.street.number);
-  }, [])
+  }, [props])
 
   const handleSubmit = (event: any) => {
     event.preventDefault();
     const name_validation = first.length < 3 || last.length < 3 ? 'Name is too short' : '';
-    const regex = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+    const regex = /\S+@\S+\.\S+/;
     const email_validation = regex.test(email) ? '' : 'Email address is not valid';
-    const unique_email = emails.filter((email_adress: string) => email_adress === email).length > isNew ? 0 : 1 ? 'Not a unique email adress' : '';
-    
-    if(name_validation !== '' || email_validation !== '' || unique_email !== '') {
+    const unique_email_filter = emails.filter((email_adress: string) => email_adress === email).length;
+    const unique_email = unique_email_filter > 0 ? 'Not a unique email adress' : '';
+
+    if (name_validation !== '' || email_validation !== '' || unique_email !== '') {
       setErrorMessage(`${name_validation} ${email_validation} ${unique_email}`);
     }
     else {
-      const id = isNew ? uuidv4() : props?.login?.uuid;
+      const id = isNew ? uuidv4() : props?.uuid;
       const values = {
         name: {
           title,
@@ -56,9 +55,7 @@ const EditForm = ({ props, updateDetails, closeForm, deleteUser, emails }: any) 
             number: street_number
           }
         },
-        login: {
-          uuid: id
-        }
+        uuid: id
       }
       updateDetails(id, values, isNew);
       closeForm();
@@ -89,17 +86,18 @@ const EditForm = ({ props, updateDetails, closeForm, deleteUser, emails }: any) 
   }
 
   const performDelete = (flag: boolean) => {
-    if(flag) {
-      const id = props?.login?.uuid;
+    if (flag) {
+      const id = props?.uuid;
       deleteUser(id);
     }
     closeForm();
   }
+  const handleClose = () => hideFunc(false);
 
   return (
-    <OverLay>
-      <div>
-        <form action="" onSubmit={e => handleSubmit(e)}>
+    <Modal show={show} onHide={handleClose}>
+      <Modal.Body>
+        <form onSubmit={e => handleSubmit(e)}>
           <label htmlFor="title">
             title
             <input type="text" name="title" value={title} onChange={e => setTitle(e.target.value)} />
@@ -132,16 +130,15 @@ const EditForm = ({ props, updateDetails, closeForm, deleteUser, emails }: any) 
             House number
             <input type="text" name="street_number" value={street_number} onChange={e => setStreetNumber(e.target.value)} />
           </label>
-          <button type="submit">Save</button>
-          <button onClick={(e) => cancelEdit(e)}>Cancel</button>
-          
-          {isNew ? <button onClick={(e) => deleteObject(e)}>Delete</button> : null}
-          
-          {error_message}
+          <div>
+            <Button type="submit">Save</Button>
+            <Button onClick={(e) => cancelEdit(e)}>Cancel</Button>
+            {isNew ? null : <Button onClick={(e) => deleteObject(e)}>Delete</Button>}
+            {error_message}
+          </div>
         </form>
-
-      </div>
-    </OverLay>
+      </Modal.Body>
+    </Modal>
   )
 }
 
